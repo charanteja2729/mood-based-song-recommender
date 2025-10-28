@@ -16,9 +16,36 @@ load_dotenv()  # Load variables from .env
 # --- Flask App Initialization ---
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
+# ---!!! THIS IS THE FIX !!!---
+# Download ALL NLTK resources needed by the app at startup
+
+# Download 'punkt'
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    print("✅ [INFO] App starting: Downloading NLTK 'punkt'...")
+    nltk.download('punkt', quiet=True)
+
+# Download 'stopwords'
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    print("✅ [INFO] App starting: Downloading NLTK 'stopwords'...")
+    nltk.download('stopwords', quiet=True)
+
+# Download 'punkt_tab' (This was the missing one)
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    print("✅ [INFO] App starting: Downloading NLTK 'punkt_tab'...")
+    nltk.download('punkt_tab', quiet=True)
+
+print("✅ [INFO] NLTK resources for app are ready.")
+# ---!!! END OF FIX !!!---
+
+
 # --- NLTK Setup (for text preprocessing) ---
-nltk.download('punkt', quiet=True)
-nltk.download('stopwords', quiet=True)
+# We can now safely load these
 stop_words = set(stopwords.words('english'))
 stemmer = PorterStemmer()
 
@@ -31,9 +58,9 @@ try:
     vectorizer = joblib.load(vectorizer_path)
     print("✅ [INFO] ML models loaded successfully.")
 except FileNotFoundError as e:
-    print(f"❌ [ERROR] Model files not found. Make sure you have run 'training/train_model.py'")
+    print(f"❌ [ERROR] Model files not found. This should not happen if the build succeeded.")
     print(f"Details: {e}")
-    exit() # Exit if models aren't found
+    # We don't exit() here, but the app will fail on /api/predict
 
 # --- Spotify API Setup ---
 try:
@@ -53,7 +80,6 @@ try:
 except Exception as e:
     print(f"❌ [ERROR] Could not initialize Spotify API.")
     print(f"Details: {e}")
-    exit()
 
 # --- Recommendation Logic & "Databases" ---
 
@@ -88,6 +114,8 @@ LANGUAGE_KEYWORDS = {
 # --- Text Pre-processing Function ---
 def preprocess_text(text):
     """Cleans and prepares text for the model."""
+    # This function uses 'word_tokenize' and 'stopwords',
+    # which is why we need to download them at the top of this file.
     tokens = word_tokenize(text.lower())
     processed_tokens = [
         stemmer.stem(word) for word in tokens 
@@ -153,10 +181,10 @@ def api_predict():
             
             songs.append({
                 "id": track["id"],
-                "song_name": track["name"],  # <-- RENAMED (was "title")
+                "song_name": track["name"],  # Match app.js
                 "artist": track["artists"][0]["name"],
                 # Handle cases where album art might be missing
-                "image_url": track["album"]["images"][0]["url"] if track["album"]["images"] else "https://placehold.co/100x100/222/fff?text=No+Art", # <-- RENAMED (was "album_art")
+                "image_url": track["album"]["images"][0]["url"] if track["album"]["images"] else "https://placehold.co/100x100/222/fff?text=No+Art", # Match app.js
                 "preview_url": track["preview_url"],
                 "spotify_url": track["external_urls"]["spotify"]
             })
@@ -172,5 +200,6 @@ def api_predict():
 
 # --- Run the App ---
 if __name__ == "__main__":
+    # This part is ignored by Gunicorn, but good for local dev
     app.run(debug=True)
 
