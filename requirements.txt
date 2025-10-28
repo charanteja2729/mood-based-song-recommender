@@ -1,0 +1,7 @@
+flask
+spotipy
+nltk
+pandas
+scikit-learn
+joblib
+python-dotenv

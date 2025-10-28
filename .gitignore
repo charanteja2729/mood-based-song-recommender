@@ -1,0 +1,20 @@
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+*.env
+
+# Ignore Spotipy cache file
+.cache
+
+# Datasets and Models
+# (It's better to have scripts that generate them)
+training/*.csv
+models/*.pkl
