@@ -24,6 +24,13 @@ except LookupError:
     print("Downloading 'stopwords' data...")
     nltk.download('stopwords', quiet=True)
 
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    print("Downloading 'punkt_tab' data...")
+    nltk.download('punkt_tab', quiet=True)
+
+
 # --- Configuration ---
 DATA_FILE = os.path.join("training", "emotions.csv")
 MODEL_DIR = "models"
