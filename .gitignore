@@ -16,5 +16,4 @@ Thumbs.db
 
 # Datasets and Models
 # (It's better to have scripts that generate them)
-training/*.csv
 models/*.pkl
